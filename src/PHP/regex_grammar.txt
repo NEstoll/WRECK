@@ -1,0 +1,34 @@
+1. Start -> AltExpr $ 
+
+2. AltExpr 	-> SeqExpr AltExprTail
+3. AltExprTail	-> "|" AltExpr
+4. AltExprTail	-> lambda
+
+5. SeqExpr	-> KlnExpr SeqExprTail
+6. SeqExprTail	-> SeqExpr
+7. SeqExprTail	-> lambda
+
+8. KlnExpr	-> ParExpr KlnExprTail
+9. KlnExprTail	-> * KlnExprTail
+10.KlnExprTail	-> + KlnExprTail
+11.KlnExprtail	-> lambda 
+
+12.ParExpr	-> ( AltExpr ) 
+13.ParExpr	-> Expr ExprTail
+
+14.Expr		-> a | b | ... | z 
+15.ExprTail	-> - Expr
+16.ExprTail	-> lambda
+		 
+
+nterm		| [a-z]	| */+	| "|"	| (	| )	| -
+----------------+-------+-------+-------+-------+-------+------
+AltExpr		| 2.	| 	| 	| 2.	| 	|
+AltExprTail	| 	| 	| 3.	| 	| 4.	|
+SeqExpr		| 5.	| 	|	| 5.	|	|
+SeqExprTail	| 6.	| 	| 7. 	| 6.	| 7.	|
+KlnExpr		| 8. 	|	|	| 8.	|	|
+KlnExprTail	| 11.	| 9/10.	| 11.	| 11.	| 11.	| 
+ParExpr		| 13.	|	|	| 12.	|	|
+Expr		| 14.	|	|	|	|	|
+ExprTail	| 16.	| 16.	| 16.	| 16.	| 16.	| 15. 

@@ -1,0 +1,9 @@
+START -> B A $
+B -> B A
+   | lambda
+   | b
+A -> c E
+E -> D
+   | s times t
+   | lambda
+D -> d

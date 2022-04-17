@@ -1,0 +1,16 @@
+char a
+dash -
+char z
+pipe |
+open (
+char e
+plus +
+pipe |
+char x0a
+pipe |
+char x20
+pipe |
+char *
+pipe |
+char +
+close )

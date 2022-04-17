@@ -1,0 +1,10 @@
+start symbol
+START
+nonterminals
+D, START, E, A, B
+all symbols
+$, START, D, times, b, lambda, E, s, d, A, B, c, t
+production rules
+[('START', 'B A $'), ('B', 'B A'), ('B', 'lambda'), ('B', 'b'), ('A', 'c E'), ('E', 'D'), ('E', 's times t'), ('E', 'lambda'), ('D', 'd')]
+string rules
+['(1) START -> B A $', '(2) B -> B A', '(3) B -> lambda', '(4) B -> b', '(5) A -> c E', '(6) E -> D', '(7) E -> s times t', '(8) E -> lambda', '(9) D -> d']

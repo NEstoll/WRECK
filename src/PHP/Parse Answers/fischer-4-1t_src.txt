@@ -1,0 +1,1 @@
+[S[E[PREFIX[f:sin]][lparen:(][E[PREFIX[f:cos]][lparen:(][E[v:3][TAIL[plus:+][E[v:4][TAIL[plus:+][E[PREFIX[f:tan]][lparen:(][E[v:0][TAIL[plus:+][E[v:2][TAIL[plus:+][E[v:4][TAIL]]]]]][rparen:)]]]]]][rparen:)]][rparen:)]][$:]]

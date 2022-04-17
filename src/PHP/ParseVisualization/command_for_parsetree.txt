@@ -1,0 +1,1 @@
+cat parsetree.txt | ./tree-to-graphvis | dot -Tpng -o parsetree.png
