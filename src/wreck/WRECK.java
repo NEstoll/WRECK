@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class WRECK {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         Scanner reader = new Scanner(new File(args[0]));
         String firstline = reader.nextLine();
         ArrayList<Character> chars = new ArrayList<>();
@@ -22,36 +22,71 @@ public class WRECK {
                 }
             }
         }
-        ArrayList<Pair<Pair<String, String>, ArrayList<Pair<Boolean, ArrayList<Integer>>>>> NFA_Tables = new ArrayList<>();
+        ArrayList<Map<Character, ArrayList<Integer>>> NFA_Tables = new ArrayList<>();
         while (reader.hasNextLine()) {
             String[] line = reader.nextLine().split("\\s+");
             if (line.length < 2) {
                 continue;
             }
             String regex = line[0];
-            ArrayList<Pair<Boolean, ArrayList<Integer>>> transitionTable = new ArrayList<>();
+            Map<Character, ArrayList<Integer>> transitionTable = new HashMap<>();
+            for (char c: chars) {
+                transitionTable.put(c, new ArrayList<>());
+            }
+            PrintWriter lgaIn = new PrintWriter("regexOut.txt");
+            lgaIn.print(regexFormat(regex));
+            lgaIn.close();
+            Runtime rt = Runtime.getRuntime();
+            Process pr = rt.exec("py src\\PHP\\parse_tree.py regexOut.txt src\\PHP\\LGA22\\llre.cfg out.txt");
+            pr.waitFor();
+            System.out.println("done" + pr.exitValue());
+
             //TODO use lga code to generate NFA
             if (line.length == 3) {
-                NFA_Tables.add(new Pair<>(new Pair<>(line[1], line[2]), transitionTable));
+                NFA_Tables.add(transitionTable);
             } else {
-                NFA_Tables.add(new Pair<>(new Pair<>(line[1], null), transitionTable));
+                NFA_Tables.add(transitionTable);
             }
         }
         //TODO convert tt to files
-
     }
 
-    public static class Match {
-        public String longest = "";
-        public int line = 1;
-        public int charNum = 1;
-
-        public Match() {
+    public static String regexFormat(String regex) {
+        String out = "";
+        for (int i = 0; i < regex.length(); i++) {
+            switch (regex.charAt(i)) {
+                case '(':
+                    out += "open (\n";
+                    break;
+                case ')':
+                    out += "close )\n";
+                    break;
+                case '|':
+                    out += "pipe |\n";
+                    break;
+                case '.':
+                    out += "dot .\n";
+                    break;
+                case '+':
+                    out += "plus +\n";
+                    break;
+                case '-':
+                    out += "dash -\n";
+                    break;
+                case '*':
+                    out += "kleene *\n";
+                    break;
+                case '\\':
+                    if (regex.charAt(i+1) == 's') {
+                        out += "char  \n";
+                        break;
+                    }
+                    i++;
+                default:
+                    out += "char " + regex.charAt(i) + "\n";
+                    break;
+            }
         }
-
-        public Match(int line, int charNum) {
-            this.line = line;
-            this.charNum = charNum;
-        }
+        return out;
     }
 }

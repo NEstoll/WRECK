@@ -21,7 +21,7 @@ def derives_to_lambda(L, T, prod_rules, nonterminals, terminals):
                 all_derive_lambda = derives_to_lambda(symbol, T, prod_rules, nonterminals, terminals)
                 T.pop()
                 if not all_derive_lambda:
-                    return False
+                    continue
             
             if all_derive_lambda:
                 return True

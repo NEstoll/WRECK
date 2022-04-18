@@ -25,11 +25,15 @@ class TreeNode:
 
 
 # Example child class with a simple SDT procedure
-class singleChild(TreeNode):
+class Seq(TreeNode):
     def __init__(self, type, value):
         super().__init__(type, value)
 
     def SDT(self):
+        if len(self.children) == 1:
+            self.type = "lambda"
+            self.value = "lambda"
+            self.children = []
         self.type = self.children[0].type
         self.value = self.children[0].value
         self.children = []
@@ -200,7 +204,7 @@ Root = LLTreeParse(holdToken, LLTable, production_rules, start, nonterminals, te
 
 # rotate(Root) ##for testing rotate logic
 
-WriteTreeToFile(Root)
+WriteTreeToFile(Root, sys.argv[3])
 
 out = printTree(Root)
 

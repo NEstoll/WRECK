@@ -61,12 +61,12 @@ def build_table(production_rules, nonterminals, terminals):
     return LLTable
 
 """"""
-grammar = GrammarParser('lecture_example.txt').parse_grammar()
-production_rules = grammar['production rules']
-nonterminals = grammar['nonterminals']
-terminals = grammar['terminals']
-
-LLTable = build_table(production_rules, nonterminals, terminals)
+# grammar = GrammarParser('lecture_example.txt').parse_grammar()
+# production_rules = grammar['production rules']
+# nonterminals = grammar['nonterminals']
+# terminals = grammar['terminals']
+#
+# LLTable = build_table(production_rules, nonterminals, terminals)
 
 """
 # print out as in lecture -- example here: https://ibb.co/xHppdr5
