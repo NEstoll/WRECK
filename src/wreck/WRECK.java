@@ -37,10 +37,9 @@ public class WRECK {
             lgaIn.print(regexFormat(regex));
             lgaIn.close();
             Runtime rt = Runtime.getRuntime();
-            Process pr = rt.exec("py src\\PHP\\parse_tree.py regexOut.txt src\\PHP\\LGA22\\llre.cfg out.txt");
+            Process pr = rt.exec("python3 src/PHP/parse_tree.py regexOut.txt src/PHP/LGA22/llre.cfg out.txt");
             pr.waitFor();
             System.out.println("done" + pr.exitValue());
-
             //TODO use lga code to generate NFA
             if (line.length == 3) {
                 NFA_Tables.add(transitionTable);

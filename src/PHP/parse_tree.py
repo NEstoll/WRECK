@@ -16,11 +16,49 @@ class TreeNode:
         self.parent = self
         self.id = -1
         if value is None:
-            self.value = ''
+            self.value = nodeName
         else:
             self.value = value
 
     def SDT(self):
+        if len(self.children) == 0:
+            return
+        if len(self.children) == 1:
+            self.name = self.children[0].name
+            self.type = self.children[0].type
+            self.value = self.children[0].value
+            self.children = self.children[0].children
+            return
+        if self.children[len(self.children)-1].name == "lambda":
+            self.children.pop(len(self.children)-1)
+        if self.children[0].name == "open":
+            self.children.pop(0)
+            self.children.pop(len(self.children)-1)
+        if len(self.children) == 1:
+            self.name = self.children[0].name
+            self.type = self.children[0].type
+            self.value = self.children[0].value
+            self.children = self.children[0].children
+            return
+        for child in self.children:
+            if child.name == "ALTLIST":
+                child.children.pop(0)
+                self.children.extend(child.children)
+            if child.name == "SEQLIST":
+                self.children.extend(child.children)
+        self.children = [item for item in self.children if not item.name == "ALTLIST" and not item.name == "SEQLIST"]
+        if len(self.children) == 2 and self.children[1].name == "CHARRNG":
+            self.value = "-"
+            self.children.append(self.children[1].children[1])
+            self.children.pop(1)
+        if self.value == "ATOM":
+            self.value = self.children[1].value
+            self.children.pop(1)
+        if self.value == "RE":
+            self.name = self.children[0].name
+            self.type = self.children[0].type
+            self.value = self.children[0].value
+            self.children = self.children[0].children
         return
 
 
@@ -31,12 +69,9 @@ class Seq(TreeNode):
 
     def SDT(self):
         if len(self.children) == 1:
-            self.type = "lambda"
-            self.value = "lambda"
+            self.type = self.children[0].type
+            self.value = self.children[0].value
             self.children = []
-        self.type = self.children[0].type
-        self.value = self.children[0].value
-        self.children = []
         return
 
 
@@ -89,7 +124,7 @@ def WriteTreeToFile(node: TreeNode, Output_File_Name="ParseVisualization/parsetr
         if current_node.id == -1:
             current_node.id = node_id
             node_id += 1
-        node_identifiers.append(f'{str(current_node.id)} {current_node.name}')
+        node_identifiers.append(f'{str(current_node.id)} {current_node.value}')
         edges = []
         # current_node points to node1,node2,node...
         for child_node in current_node.children:
@@ -142,10 +177,8 @@ def LLTreeParse(ts, LLT, P, start, N, term):
                     R = copy.copy(P[p - 1][1])
                     while len(R) > 0:
                         K.append(R.pop())
-                    match x:  # Add cases to match for SDT
-                        case _:
-                            # n = TreeNode(x)
-                            n = TreeNode(x, 'Node', None)
+
+                    n = TreeNode(x, 'Node', None)
                     n.parent = Current
                     Current.children.append(n)
                     Current = Current.children[len(Current.children) - 1]
