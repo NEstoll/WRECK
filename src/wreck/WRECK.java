@@ -3,11 +3,16 @@ package wreck;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class WRECK {
+    static Map<Character, Integer> charMap;
+    static char lambda;
     public static void main(String[] args) throws IOException, InterruptedException {
         Scanner reader = new Scanner(new File(args[0]));
+        PrintWriter out = new PrintWriter("scan.u");
         String firstline = reader.nextLine();
+        out.println(firstline);
         ArrayList<Character> chars = new ArrayList<>();
         String[] split = firstline.split("\\s+");
         for (int i = 0; i < split.length; i++) {
@@ -22,32 +27,108 @@ public class WRECK {
                 }
             }
         }
-        ArrayList<Map<Character, ArrayList<Integer>>> NFA_Tables = new ArrayList<>();
+        ArrayList<ArrayList<ArrayList<Integer>>> NFA_Tables = new ArrayList<>();
         while (reader.hasNextLine()) {
             String[] line = reader.nextLine().split("\\s+");
             if (line.length < 2) {
                 continue;
             }
             String regex = line[0];
-            Map<Character, ArrayList<Integer>> transitionTable = new HashMap<>();
-            for (char c: chars) {
-                transitionTable.put(c, new ArrayList<>());
+            charMap = new HashMap<>();
+            for (int i = 0; i < chars.size(); i++) {
+                char c = chars.get(i);
+                charMap.put(chars.get(i), i);
             }
+            lambda = 'l';
+            while (chars.contains(lambda)) {
+                lambda++;
+            }
+            charMap.put(lambda, chars.size());
+            ArrayList<ArrayList<Integer>> transitionTable = new ArrayList<>();
+            addRow(transitionTable);
+            addRow(transitionTable);
+
             PrintWriter lgaIn = new PrintWriter("regexOut.txt");
             lgaIn.print(regexFormat(regex));
             lgaIn.close();
             Runtime rt = Runtime.getRuntime();
-            Process pr = rt.exec("python3 src/PHP/parse_tree.py regexOut.txt src/PHP/LGA22/llre.cfg out.txt");
+            Process pr = rt.exec("py src/PHP/parse_tree.py regexOut.txt src/PHP/LGA22/llre.cfg out.txt");
             pr.waitFor();
             System.out.println("done" + pr.exitValue());
-            //TODO use lga code to generate NFA
-            if (line.length == 3) {
-                NFA_Tables.add(transitionTable);
-            } else {
-                NFA_Tables.add(transitionTable);
+            Scanner tree = new Scanner(new File("out.txt"));
+            String next = tree.nextLine();
+            Map<Integer, TreeNode> states = new HashMap();
+            while (!next.equals("")) {
+                states.put(Integer.parseInt(next.split(" ")[0]), new TreeNode( next.split(" ")[1]));
+                next = tree.nextLine();
             }
+            while (tree.hasNextLine()) {
+                next = tree.nextLine();
+                int from = Integer.parseInt(next.split(" ")[0]);
+                String[] s = next.split(" ");
+                for (int i = 1, sLength = s.length; i < sLength; i++) {
+                    int to = Integer.parseInt(s[i]);
+                    states.get(from).addChildren(states.get(to));
+                }
+            }
+            TreeNode root = states.get(0);
+
+            //TODO generate tt from re tree
+            makeNFA(root, transitionTable, charMap, 0, 1);
+
+            line[0] = line[1] + ".tt";
+            for (String s: line) {
+                out.print(s + " ");
+            }
+            out.println();
+
+
+            PrintWriter NFA = new PrintWriter(line[0]);
+            String charString = "";
+            for (char c: chars) {
+                charString += "x" + String.format("%02x", (int)c) + " ";
+            }
+            charString.trim();
+            NFA.println(transitionTable.size() + " " + lambda + " " + charString);
+            Map<Integer, Character> inverse = charMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+            for (int i = 0; i < transitionTable.size(); i++) {
+                ArrayList<Integer> row = transitionTable.get(i);
+
+                boolean extra = true;
+                for (int k = 0, rowSize = row.size(); k < rowSize; k++) {
+                    Integer j = row.get(k);
+                    if (j != -1) {
+                        if (i == 1) {
+                            NFA.print("+ ");
+                        } else {
+                            NFA.print("- ");
+                        }
+                        NFA.println(i + " " + j + " x" + String.format("%02x", ((int) inverse.get(k))));
+                        extra = false;
+                    }
+                }
+                if (extra) {
+                    if (i == 1) {
+                        NFA.print("+ ");
+                    } else {
+                        NFA.print("- ");
+                    }
+                    NFA.println(i + " " + i);
+                }
+            }
+            NFA.close();
+            NFA_Tables.add(transitionTable);
         }
+        out.close();
         //TODO convert tt to files
+    }
+
+    public static void addRow(ArrayList<ArrayList<Integer>> transitionTable) {
+        transitionTable.add(new ArrayList<>());
+        for (Character c: charMap.keySet()) {
+            transitionTable.get(transitionTable.size()-1).add(-1);
+        }
+
     }
 
     public static String regexFormat(String regex) {
@@ -87,5 +168,49 @@ public class WRECK {
             }
         }
         return out;
+    }
+
+
+    static void makeNFA(TreeNode root, ArrayList<ArrayList<Integer>> tt, Map<Character, Integer> charMap, int start, int end) {
+        switch (root.value) {
+            case "+":
+                makeNFA(root.children.get(0), tt, charMap, start, end);
+                makeNFA(root.children.get(0), tt, charMap, start, end);
+                break;
+            case "*":
+                tt.get(start).set(charMap.get(lambda), end);
+                makeNFA(root.children.get(0), tt, charMap, end, end);
+                break;
+            case "-":
+                if (root.children.get(0).value.charAt(0) > root.children.get(1).value.charAt(0)) {
+                    //semantic error
+                } else {
+                    for (char c = root.children.get(0).value.charAt(0); c <= root.children.get(1).value.charAt(0); c++) {
+                        tt.get(start).set(charMap.get(c), end);
+                    }
+                }
+                break;
+            case ".":
+                for (char c: charMap.keySet()) {
+                    tt.get(start).set(charMap.get(c), end);
+                }
+            case "SEQ":
+                int prev = start;
+                for (TreeNode n: root.children) {
+                    addRow(tt);
+                    int next = tt.size()-1;
+                    makeNFA(n, tt, charMap, prev, tt.size()-1);
+                    prev = next;
+                }
+                tt.get(prev).set(charMap.get(lambda), end);
+                break;
+            case "ALT":
+                for (TreeNode n: root.children) {
+                    makeNFA(n, tt, charMap, start, end);
+                }
+                break;
+            default:
+                tt.get(start).set(charMap.get(root.value.charAt(0)), end);
+        }
     }
 }
