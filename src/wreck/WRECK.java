@@ -177,12 +177,18 @@ public class WRECK {
     static void makeNFA(TreeNode root, ArrayList<ArrayList<Integer>> tt, Map<Character, Integer> charMap, int start, int end) {
         switch (root.value) {
             case "+":
-                makeNFA(root.children.get(0), tt, charMap, start, end);
-                makeNFA(root.children.get(0), tt, charMap, start, end);
+                addRow(tt);
+                int temp = tt.size()-1;
+                makeNFA(root.children.get(0), tt, charMap, start, temp);
+                makeNFA(root.children.get(0), tt, charMap, temp, temp);
+                tt.get(temp).set(charMap.get(lambda), end);
                 break;
             case "*":
-                tt.get(start).set(charMap.get(lambda), end);
-                makeNFA(root.children.get(0), tt, charMap, end, end);
+                addRow(tt);
+                int t = tt.size()-1;
+                tt.get(start).set(charMap.get(lambda), t);
+                makeNFA(root.children.get(0), tt, charMap, t, t);
+                tt.get(t).set(charMap.get(lambda), end);
                 break;
             case "-":
                 if (root.children.get(0).value.charAt(0) > root.children.get(1).value.charAt(0)) {
@@ -196,17 +202,38 @@ public class WRECK {
                 break;
             case ".":
                 for (char c: charMap.keySet()) {
-                    tt.get(start).set(charMap.get(c), end);
+                    if (c != lambda) {
+                        if (tt.get(start).get(charMap.get(c)) != -1) {
+                            int loop = tt.get(start).get(charMap.get(c));
+                            boolean add = true;
+                            while (tt.get(loop).get(charMap.get(lambda)) != -1) {
+                                loop = tt.get(loop).get((charMap.get(lambda)));
+                                if (loop == end) {
+                                    add = false;
+                                    break;
+                                }
+                            }
+                            if (add) {
+                                tt.get(loop).set(charMap.get(lambda), end);
+                            }
+                        } else {
+                            tt.get(start).set(charMap.get(c), end);
+                        }
+                    }
                 }
+                break;
             case "SEQ":
                 int prev = start;
                 for (TreeNode n: root.children) {
                     addRow(tt);
                     int next = tt.size()-1;
-                    makeNFA(n, tt, charMap, prev, tt.size()-1);
+                    makeNFA(n, tt, charMap, prev, next);
                     prev = next;
                 }
                 tt.get(prev).set(charMap.get(lambda), end);
+                break;
+            case "lambda":
+                tt.get(start).set(charMap.get(lambda), end);
                 break;
             case "ALT":
                 for (TreeNode n: root.children) {
@@ -214,7 +241,12 @@ public class WRECK {
                 }
                 break;
             default:
-                tt.get(start).set(charMap.get(root.value.charAt(0)), end);
+                if (tt.get(start).get(charMap.get(root.value.charAt(0))) != -1) {
+                    System.out.println("yoloy");
+                    tt.get(tt.get(start).get(charMap.get(root.value.charAt(0)))).set(charMap.get(lambda), end);
+                } else {
+                    tt.get(start).set(charMap.get(root.value.charAt(0)), end);
+                }
         }
     }
 }
