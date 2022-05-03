@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 public class WRECK {
     static Map<Character, Integer> charMap;
     static char lambda;
+
     public static void main(String[] args) throws IOException, InterruptedException {
         Scanner reader = new Scanner(new File(args[0]));
         PrintWriter out = new PrintWriter("scan.u");
@@ -59,7 +60,7 @@ public class WRECK {
             String next = tree.nextLine();
             Map<Integer, TreeNode> states = new HashMap();
             while (!next.equals("")) {
-                states.put(Integer.parseInt(next.split(" ")[0]), new TreeNode( next.split(" ")[1]));
+                states.put(Integer.parseInt(next.split(" ")[0]), new TreeNode(next.split(" ")[1]));
                 next = tree.nextLine();
             }
             while (tree.hasNextLine()) {
@@ -77,7 +78,7 @@ public class WRECK {
             makeNFA(root, transitionTable, charMap, 0, 1);
 
             line[0] = line[1] + ".tt";
-            for (String s: line) {
+            for (String s : line) {
                 out.print(s + " ");
             }
             out.println();
@@ -85,8 +86,8 @@ public class WRECK {
 
             PrintWriter NFA = new PrintWriter(line[0]);
             String charString = "";
-            for (char c: chars) {
-                charString += "x" + String.format("%02x", (int)c) + " ";
+            for (char c : chars) {
+                charString += "x" + String.format("%02x", (int) c) + " ";
             }
             charString.trim();
             NFA.println(transitionTable.size() + " " + lambda + " " + charString);
@@ -97,14 +98,14 @@ public class WRECK {
                 boolean extra = true;
                 for (int k = 0, rowSize = row.size(); k < rowSize; k++) {
                     ArrayList<Integer> l = row.get(k);
-                    for (Integer j: l) {
-                            if (i == 1) {
-                                NFA.print("+ ");
-                            } else {
-                                NFA.print("- ");
-                            }
-                            NFA.println(i + " " + j + " x" + String.format("%02x", ((int) inverse.get(k))));
-                            extra = false;
+                    for (Integer j : l) {
+                        if (i == 1) {
+                            NFA.print("+ ");
+                        } else {
+                            NFA.print("- ");
+                        }
+                        NFA.println(i + " " + j + " x" + String.format("%02x", ((int) inverse.get(k))));
+                        extra = false;
                     }
                 }
                 if (extra) {
@@ -124,9 +125,9 @@ public class WRECK {
 
     public static void addRow(ArrayList<ArrayList<ArrayList<Integer>>> transitionTable) {
         transitionTable.add(new ArrayList<>());
-        for (Character c: charMap.keySet()) {
-            transitionTable.get(transitionTable.size()-1).add(new ArrayList<>());
-            transitionTable.get(transitionTable.size()-1).get(0).add(-1);
+        for (Character c : charMap.keySet()) {
+            transitionTable.get(transitionTable.size() - 1).add(new ArrayList<>());
+            transitionTable.get(transitionTable.size() - 1).get(0).add(-1);
         }
 
     }
@@ -157,7 +158,7 @@ public class WRECK {
                     out += "kleene *\n";
                     break;
                 case '\\':
-                    if (regex.charAt(i+1) == 's') {
+                    if (regex.charAt(i + 1) == 's') {
                         out += "char  \n";
                         break;
                     }
@@ -174,13 +175,23 @@ public class WRECK {
     static void makeNFA(TreeNode root, ArrayList<ArrayList<ArrayList<Integer>>> tt, Map<Character, Integer> charMap, int start, int end) {
         switch (root.value) {
             case "+":
-                makeNFA(root.children.get(0), tt, charMap, start, end);
-                makeNFA(root.children.get(0), tt, charMap, start, end);
+                addRow(tt);
+                int temp = tt.size() - 1;
+                makeNFA(root.children.get(0), tt, charMap, start, temp);
+                makeNFA(root.children.get(0), tt, charMap, temp, temp);
+                tt.get(temp).get(charMap.get(lambda)).add(end);
                 break;
             case "*":
-                tt.get(start).get(charMap.get(lambda)).add(end);
-                makeNFA(root.children.get(0), tt, charMap, end, end);
+                addRow(tt);
+                int t = tt.size() - 1;
+                tt.get(start).get(charMap.get(lambda)).add(t);
+                makeNFA(root.children.get(0), tt, charMap, t, t);
+                tt.get(t).get(charMap.get(lambda)).add(end);
                 break;
+            case "lambda":
+                tt.get(start).get(charMap.get(lambda)).add(end);
+                break;
+
             case "-":
                 if (root.children.get(0).value.charAt(0) > root.children.get(1).value.charAt(0)) {
                     //semantic error
@@ -191,21 +202,21 @@ public class WRECK {
                 }
                 break;
             case ".":
-                for (char c: charMap.keySet()) {
+                for (char c : charMap.keySet()) {
                     tt.get(start).get(charMap.get(c)).add(end);
                 }
             case "SEQ":
                 int prev = start;
-                for (TreeNode n: root.children) {
+                for (TreeNode n : root.children) {
                     addRow(tt);
-                    int next = tt.size()-1;
-                    makeNFA(n, tt, charMap, prev, tt.size()-1);
+                    int next = tt.size() - 1;
+                    makeNFA(n, tt, charMap, prev, tt.size() - 1);
                     prev = next;
                 }
                 tt.get(prev).get(charMap.get(lambda)).add(end);
                 break;
             case "ALT":
-                for (TreeNode n: root.children) {
+                for (TreeNode n : root.children) {
                     makeNFA(n, tt, charMap, start, end);
                 }
                 break;
