@@ -55,7 +55,7 @@ public class WRECK {
             Runtime rt = Runtime.getRuntime();
             Process pr = rt.exec("python3 PHP/parse_tree.py _regexOut.txt PHP/LGA22/llre.cfg _out.txt");
             pr.waitFor();
-            System.out.println("done" + pr.exitValue());
+            //System.out.println("done" + pr.exitValue());
 			if (pr.exitValue() != 0) {
 				System.exit(2);
 			}
@@ -87,7 +87,7 @@ public class WRECK {
             out.println();
 
 
-            PrintWriter NFA = new PrintWriter(line[0]);
+            PrintWriter NFA = new PrintWriter(line[1] + ".nfa");
             String charString = "";
             for (char c : chars) {
                 charString += "x" + String.format("%02x", (int) c) + " ";
@@ -130,7 +130,6 @@ public class WRECK {
         transitionTable.add(new ArrayList<>());
         for (Character c : charMap.keySet()) {
             transitionTable.get(transitionTable.size() - 1).add(new ArrayList<>());
-            transitionTable.get(transitionTable.size() - 1).get(0).add(-1);
         }
 
     }
