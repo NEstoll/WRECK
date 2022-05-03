@@ -11,7 +11,7 @@ public class WRECK {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         Scanner reader = new Scanner(new File(args[0]));
-        PrintWriter out = new PrintWriter("scan.u");
+        PrintWriter out = new PrintWriter(args[1]);
         String firstline = reader.nextLine();
         out.println(firstline);
         ArrayList<Character> chars = new ArrayList<>();
@@ -49,16 +49,19 @@ public class WRECK {
             addRow(transitionTable);
             addRow(transitionTable);
 
-            PrintWriter lgaIn = new PrintWriter("regexOut.txt");
+            PrintWriter lgaIn = new PrintWriter("_regexOut.txt");
             lgaIn.print(regexFormat(regex));
             lgaIn.close();
             Runtime rt = Runtime.getRuntime();
-            Process pr = rt.exec("py src/PHP/parse_tree.py regexOut.txt src/PHP/LGA22/llre.cfg out.txt");
+            Process pr = rt.exec("python3 PHP/parse_tree.py _regexOut.txt PHP/LGA22/llre.cfg _out.txt");
             pr.waitFor();
             System.out.println("done" + pr.exitValue());
-            Scanner tree = new Scanner(new File("out.txt"));
+			if (pr.exitValue() != 0) {
+				System.exit(2);
+			}
+            Scanner tree = new Scanner(new File("_out.txt"));
             String next = tree.nextLine();
-            Map<Integer, TreeNode> states = new HashMap();
+            Map<Integer, TreeNode> states = new HashMap<>();
             while (!next.equals("")) {
                 states.put(Integer.parseInt(next.split(" ")[0]), new TreeNode(next.split(" ")[1]));
                 next = tree.nextLine();
@@ -195,6 +198,7 @@ public class WRECK {
             case "-":
                 if (root.children.get(0).value.charAt(0) > root.children.get(1).value.charAt(0)) {
                     //semantic error
+					System.exit(3);
                 } else {
                     for (char c = root.children.get(0).value.charAt(0); c <= root.children.get(1).value.charAt(0); c++) {
                         tt.get(start).get(charMap.get(c)).add(end);
