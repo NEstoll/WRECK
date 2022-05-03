@@ -44,7 +44,7 @@ public class WRECK {
                 lambda++;
             }
             charMap.put(lambda, chars.size());
-            ArrayList<ArrayList<Integer>> transitionTable = new ArrayList<>();
+            ArrayList<ArrayList<ArrayList<Integer>>> transitionTable = new ArrayList<>();
             addRow(transitionTable);
             addRow(transitionTable);
 
@@ -92,19 +92,19 @@ public class WRECK {
             NFA.println(transitionTable.size() + " " + lambda + " " + charString);
             Map<Integer, Character> inverse = charMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
             for (int i = 0; i < transitionTable.size(); i++) {
-                ArrayList<Integer> row = transitionTable.get(i);
+                ArrayList<ArrayList<Integer>> row = transitionTable.get(i);
 
                 boolean extra = true;
                 for (int k = 0, rowSize = row.size(); k < rowSize; k++) {
-                    Integer j = row.get(k);
-                    if (j != -1) {
-                        if (i == 1) {
-                            NFA.print("+ ");
-                        } else {
-                            NFA.print("- ");
-                        }
-                        NFA.println(i + " " + j + " x" + String.format("%02x", ((int) inverse.get(k))));
-                        extra = false;
+                    ArrayList<Integer> l = row.get(k);
+                    for (Integer j: l) {
+                            if (i == 1) {
+                                NFA.print("+ ");
+                            } else {
+                                NFA.print("- ");
+                            }
+                            NFA.println(i + " " + j + " x" + String.format("%02x", ((int) inverse.get(k))));
+                            extra = false;
                     }
                 }
                 if (extra) {
@@ -117,16 +117,16 @@ public class WRECK {
                 }
             }
             NFA.close();
-            NFA_Tables.add(transitionTable);
         }
         out.close();
         //TODO convert tt to files
     }
 
-    public static void addRow(ArrayList<ArrayList<Integer>> transitionTable) {
+    public static void addRow(ArrayList<ArrayList<ArrayList<Integer>>> transitionTable) {
         transitionTable.add(new ArrayList<>());
         for (Character c: charMap.keySet()) {
-            transitionTable.get(transitionTable.size()-1).add(-1);
+            transitionTable.get(transitionTable.size()-1).add(new ArrayList<>());
+            transitionTable.get(transitionTable.size()-1).get(0).add(-1);
         }
 
     }
@@ -171,14 +171,14 @@ public class WRECK {
     }
 
 
-    static void makeNFA(TreeNode root, ArrayList<ArrayList<Integer>> tt, Map<Character, Integer> charMap, int start, int end) {
+    static void makeNFA(TreeNode root, ArrayList<ArrayList<ArrayList<Integer>>> tt, Map<Character, Integer> charMap, int start, int end) {
         switch (root.value) {
             case "+":
                 makeNFA(root.children.get(0), tt, charMap, start, end);
                 makeNFA(root.children.get(0), tt, charMap, start, end);
                 break;
             case "*":
-                tt.get(start).set(charMap.get(lambda), end);
+                tt.get(start).get(charMap.get(lambda)).add(end);
                 makeNFA(root.children.get(0), tt, charMap, end, end);
                 break;
             case "-":
@@ -186,13 +186,13 @@ public class WRECK {
                     //semantic error
                 } else {
                     for (char c = root.children.get(0).value.charAt(0); c <= root.children.get(1).value.charAt(0); c++) {
-                        tt.get(start).set(charMap.get(c), end);
+                        tt.get(start).get(charMap.get(c)).add(end);
                     }
                 }
                 break;
             case ".":
                 for (char c: charMap.keySet()) {
-                    tt.get(start).set(charMap.get(c), end);
+                    tt.get(start).get(charMap.get(c)).add(end);
                 }
             case "SEQ":
                 int prev = start;
@@ -202,7 +202,7 @@ public class WRECK {
                     makeNFA(n, tt, charMap, prev, tt.size()-1);
                     prev = next;
                 }
-                tt.get(prev).set(charMap.get(lambda), end);
+                tt.get(prev).get(charMap.get(lambda)).add(end);
                 break;
             case "ALT":
                 for (TreeNode n: root.children) {
@@ -210,7 +210,7 @@ public class WRECK {
                 }
                 break;
             default:
-                tt.get(start).set(charMap.get(root.value.charAt(0)), end);
+                tt.get(start).get(charMap.get(root.value.charAt(0))).add(end);
         }
     }
 }
