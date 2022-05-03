@@ -53,7 +53,7 @@ public class WRECK {
             lgaIn.print(regexFormat(regex));
             lgaIn.close();
             Runtime rt = Runtime.getRuntime();
-            Process pr = rt.exec("python3 PHP/parse_tree.py _regexOut.txt PHP/LGA22/llre.cfg _out.txt");
+            Process pr = rt.exec("py PHP/parse_tree.py _regexOut.txt PHP/LGA22/llre.cfg _out.txt");
             pr.waitFor();
             //System.out.println("done" + pr.exitValue());
 			if (pr.exitValue() != 0) {
@@ -92,7 +92,7 @@ public class WRECK {
             for (char c : chars) {
                 charString += "x" + String.format("%02x", (int) c) + " ";
             }
-            charString.trim();
+            charString = charString.trim();
             NFA.println(transitionTable.size() + " " + lambda + " " + charString);
             Map<Integer, Character> inverse = charMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
             for (int i = 0; i < transitionTable.size(); i++) {
@@ -161,7 +161,13 @@ public class WRECK {
                     break;
                 case '\\':
                     if (regex.charAt(i + 1) == 's') {
-                        out += "char  \n";
+                        out += "char x20\n";
+                        i++;
+                        break;
+                    }
+                    if (regex.charAt(i + 1) == 'n') {
+                        out += "char x0a\n";
+                        i++;
                         break;
                     }
                     i++;
@@ -175,6 +181,10 @@ public class WRECK {
 
 
     static void makeNFA(TreeNode root, ArrayList<ArrayList<ArrayList<Integer>>> tt, Map<Character, Integer> charMap, int start, int end) {
+        if (root.children.size() == 0) {
+            tt.get(start).get(charMap.get(root.value.charAt(0))).add(end);
+            return;
+        }
         switch (root.value) {
             case "+":
                 addRow(tt);

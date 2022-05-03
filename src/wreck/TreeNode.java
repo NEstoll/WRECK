@@ -7,7 +7,11 @@ public class TreeNode {
     ArrayList<TreeNode> children;
 
     public TreeNode(String value) {
-        this.value = value;
+        if (value.charAt(0) == 'x') {
+            this.value = "" + (char)Integer.parseInt(value.substring(1, 3), 16);
+        } else {
+            this.value = value;
+        }
         children = new ArrayList<>();
     }
 
