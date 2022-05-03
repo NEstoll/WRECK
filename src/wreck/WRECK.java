@@ -203,14 +203,17 @@ public class WRECK {
                 break;
             case ".":
                 for (char c : charMap.keySet()) {
-                    tt.get(start).get(charMap.get(c)).add(end);
+                    if (c != lambda) {
+                        tt.get(start).get(charMap.get(c)).add(end);
+                    }
                 }
+                break;
             case "SEQ":
                 int prev = start;
                 for (TreeNode n : root.children) {
                     addRow(tt);
                     int next = tt.size() - 1;
-                    makeNFA(n, tt, charMap, prev, tt.size() - 1);
+                    makeNFA(n, tt, charMap, prev, next);
                     prev = next;
                 }
                 tt.get(prev).get(charMap.get(lambda)).add(end);
